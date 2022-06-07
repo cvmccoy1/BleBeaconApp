@@ -1,0 +1,18 @@
+<resources>
+    <string name="app_name">BLE Beacon</string>
+    <string name="ble_uuid" xmlns:tools="http://schemas.android.com/tools" tools:ignore="TypographyDashes">B8CE3F1D-D741-482A-B466-CE3F46B5B1C8</string>
+    <string name="service_channel_name">BLE Beacon Service Channel</string>
+    <string name="service_channel_id">bleBeaconServiceChannel</string>
+    <string name="ble_advertising_service_title">BLE Advertising Service</string>
+    <string name="ble_advertising_service_text_format">Unique Code: %x</string>
+    <string name="unique_code">uniqueCode</string>
+    <string name="advertising_started">BLE Advertising has started</string>
+    <string name="advertising_stopped">BLE Advertising has stopped</string>
+    <string name="advertisement_not_supported">Multiple advertisement not supported</string>
+    <string name="start_advertising">Start Advertising</string>
+    <string name="stop_advertising">Stop Advertising</string>
+    <string name="unique_code_hint">Unique Code</string>
+    <string name="ble_not_supported">BLE is not supported on this device</string>
+    <string name="ble_not_enabled">BLE not currently enabled</string>
+    <string name="waiting_for_bluetooth_enable">Attempting to enable the bluetooth adapter</string>
+</resources>
