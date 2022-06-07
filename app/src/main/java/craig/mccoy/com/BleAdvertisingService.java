@@ -14,7 +14,7 @@ import androidx.core.app.NotificationCompat;
 
 //public class BleAdvertisingService extends Service implements IBluetoothReceiverCallback {
 public class BleAdvertisingService extends Service {
-    private static final String TAG = "BleAdvertisingService";
+    private static final String TAG = "BLE:BleAdvertisingService";
 
     public static volatile boolean isServiceAdvertising = false;
     private BluetoothReceiver bluetoothReceiver = null;
@@ -49,13 +49,10 @@ public class BleAdvertisingService extends Service {
 
         BleAdvertisingManager.getInstance().startAdvertising(uniqueCode);
 
-//        registerBluetoothReceiver();
-        bluetoothReceiver.registerBluetoothReceiver((state) -> {
-            if (state == BluetoothAdapter.STATE_TURNING_OFF) {
-                Log.i(TAG, "The local Bluetooth adapter is turning off. Stop BLE Advertising.");
-                stopAdvertising();
-                stopSelf();
-            }
+        bluetoothReceiver.registerBluetoothStateChanged(BluetoothAdapter.STATE_TURNING_OFF, () -> {
+            Log.i(TAG, "The local Bluetooth adapter is turning off. Stop BLE Advertising.");
+            stopAdvertising();
+            stopSelf();
         });
 
         Log.i(TAG, "onStartCommand(): Exit");
@@ -65,8 +62,7 @@ public class BleAdvertisingService extends Service {
     @Override
     public void onDestroy() {
         Log.i(TAG, "onDestroy(): Enter");
-        //unregisterBluetoothReceiver();
-        bluetoothReceiver.unregisterBluetoothReceiver();
+        bluetoothReceiver.unregisterBluetoothStateChanged(BluetoothAdapter.STATE_TURNING_OFF);
         stopAdvertising();
         super.onDestroy();
         Log.i(TAG, "onDestroy(): Exit");

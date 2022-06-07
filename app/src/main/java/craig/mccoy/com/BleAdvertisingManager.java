@@ -15,7 +15,7 @@ import java.nio.ByteBuffer;
 import java.util.UUID;
 
 public class BleAdvertisingManager {
-    private static final String TAG = "BleAdvertisingManager";
+    private static final String TAG = "BLE:BleAdvertisingManager";
 
     private static volatile BleAdvertisingManager instance;
     private static BluetoothAdapter bluetoothAdapter;

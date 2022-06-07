@@ -21,7 +21,7 @@ import java.util.List;
 
 //public class MainActivity extends AppCompatActivity implements IBluetoothReceiverCallback {
 public class MainActivity extends AppCompatActivity {
-    private static final String TAG = "MainActivity";
+    private static final String TAG = "BLE:MainActivity";
 
     private static final int REQUEST_CODE = 1234;
     private EditText editTextInput;
@@ -72,7 +72,7 @@ public class MainActivity extends AppCompatActivity {
     protected void onDestroy() {
         Log.i(TAG, "onDestroy(): Enter " + hashCode());
         super.onDestroy();
-        bluetoothReceiver.unregisterBluetoothReceiver();
+        bluetoothReceiver.unregisterBluetoothStateChanged(BluetoothAdapter.STATE_ON);
         if (!isBleAdvertisingServiceRunning()) {
             Log.i(TAG, "onDestroy(): destroying Activity while the Service is not running...kill application");
             finishAndRemoveTask();
@@ -107,13 +107,13 @@ public class MainActivity extends AppCompatActivity {
         Log.i(TAG, "onRequestPermissionsResult(): Exit");
     }
 
-    public void onClickStartAdvertising(View view) {
+    public void onClickStartAdvertising(@SuppressWarnings("unused") View view) {
         Log.i(TAG, "startService(): Enter "  + hashCode());
         startBleAdvertising();
         Log.i(TAG, "startService(): Exit");
     }
 
-    public void onClickStopAdvertising(View view) {
+    public void onClickStopAdvertising(@SuppressWarnings("unused") View view) {
         Log.i(TAG, "stopAdvertising(): Enter"  + hashCode());
         stopBleAdvertising();
         Log.i(TAG, "stopAdvertising(): Exit");
@@ -166,18 +166,11 @@ public class MainActivity extends AppCompatActivity {
         if (BleAdvertisingManager.getInstance().isBluetoothEnabled()) {
             checkForBleAdvertisingSupported();
         } else {
-            //registerBluetoothReceiver();
-
-            bluetoothReceiver.registerBluetoothReceiver((state) -> {
-                        Log.i(TAG, "BluetoothReceiver Callback lambda: state = " + state);
-                        if (state == BluetoothAdapter.STATE_ON) {
-                            Log.i(TAG, "BluetoothReceiver Callback lambda: The local Bluetooth adapter is on, and ready for use.");
-                            //unregisterBluetoothReceiver();
-                            bluetoothReceiver.unregisterBluetoothReceiver();
-                            checkForBleAdvertisingSupported();
-                        }
-                    }
-            );
+            bluetoothReceiver.registerBluetoothStateChanged(BluetoothAdapter.STATE_ON, () -> {
+                Log.i(TAG, "BluetoothReceiver Callback: The local Bluetooth adapter is on and ready for use.");
+                bluetoothReceiver.unregisterBluetoothStateChanged(BluetoothAdapter.STATE_ON);
+                checkForBleAdvertisingSupported();
+            });
             // The following should cause the callback from the previous statement to be executed when Bluetooth has been enabled
             BleAdvertisingManager.getInstance().enableBluetooth();
             Log.w(TAG, "okToStartAdvertising(): Attempting to enable the bluetooth adapter...wait for it to finish enabling");

@@ -8,15 +8,16 @@ import android.content.IntentFilter;
 import android.util.Log;
 
 import androidx.annotation.NonNull;
-import java.util.function.Consumer;
+
+import java.util.HashMap;
+import java.util.Map;
 
 public class BluetoothReceiver extends BroadcastReceiver {
-    private static final String TAG = "BluetoothReceiver";
+    private static final String TAG = "BLE:BluetoothReceiver";
 
     private final Context parentContext;
-    private volatile boolean isRegistered = false;
-    private volatile Consumer<Integer> parentCallback = null;
-    //private Map<Integer, Runnable> registeredCallbacks = new HashMap<Integer, Runnable>();
+    private final Map<Integer, Runnable> registeredCallbacks = new HashMap<>();
+    private final IntentFilter bluetoothStateChangedIntent = new IntentFilter(BluetoothAdapter.ACTION_STATE_CHANGED);
 
     public  BluetoothReceiver(Context context) {
         parentContext = context;
@@ -24,43 +25,50 @@ public class BluetoothReceiver extends BroadcastReceiver {
 
     @Override
     public void onReceive(Context context, Intent intent) {
-        Log.i(TAG, "onReceive():Enter");
+        Log.i(TAG, "onReceive():Enter for " + context);
         String action = intent.getAction();
-
-         if (BluetoothAdapter.ACTION_STATE_CHANGED.equals(action)) {
-             int state = intent.getIntExtra(BluetoothAdapter.EXTRA_STATE, -1);
-             Log.i(TAG, "onReceive():state" + state);
-             //receiverCallback.onBluetoothAdapterStateChange(state);
-             Consumer<Integer> currentCallback = parentCallback;
-             if (currentCallback != null) {
-                 Log.i(TAG, "onReceive(): Calling back to " + currentCallback);
-                 currentCallback.accept(state);
-             }
+        if (BluetoothAdapter.ACTION_STATE_CHANGED.equals(action)) {
+            int state = intent.getIntExtra(BluetoothAdapter.EXTRA_STATE, -1);
+            Log.i(TAG, "onReceive():state " + state);
+            for (Map.Entry<Integer, Runnable> entry : registeredCallbacks.entrySet()) {
+                if (entry.getKey().equals(state)) {
+                    Runnable currentCallback;
+                    synchronized (this) {
+                        currentCallback = entry.getValue();
+                    }
+                    if (currentCallback != null) {
+                        Log.i(TAG, "onReceive(): Calling back on " + state );
+                        currentCallback.run();
+                    }
+                }
+            }
         }
         Log.i(TAG, "onReceive():Exit");
     }
 
-    public synchronized  void registerBluetoothReceiver(@NonNull Consumer<Integer>callback) {
-        Log.i(TAG, "registerBluetoothReceiver(): Enter " + callback);
-        parentCallback = callback;
-        if (!isRegistered) {
-            parentContext.registerReceiver(this, new IntentFilter(BluetoothAdapter.ACTION_STATE_CHANGED));
-            isRegistered = true;
-        } else {
-            Log.w(TAG, "registerBluetoothReceiver(): bluetoothReceiver already registered");
+    public synchronized  void registerBluetoothStateChanged(int state, @NonNull Runnable callback) {
+        Log.i(TAG, "registerBluetoothStateChanged(" + state + "): Enter ");
+        if (registeredCallbacks.size() == 0) {
+            Log.i(TAG, "registerBluetoothStateChanged(): Register the Receiver");
+            parentContext.registerReceiver(this, bluetoothStateChangedIntent);
         }
-        Log.i(TAG, "registerBluetoothReceiver(): Exit");
+        if (registeredCallbacks.put(state, callback) != null)
+        {
+            Log.w(TAG, "registerBluetoothStateChanged(): " + state + " already registered");
+        }
+        Log.i(TAG, "registerBluetoothStateChanged(): Exit");
     }
 
-    public synchronized  void unregisterBluetoothReceiver() {
-        Log.i(TAG, "unregisterBluetoothReceiver(): Enter");
-        if (isRegistered) {
+    public synchronized  void unregisterBluetoothStateChanged(int state) {
+        Log.i(TAG, "unregisterBluetoothStateChanged(" + state + "): Enter ");
+
+        if (registeredCallbacks.remove(state) == null) {
+            Log.w(TAG, "unregisterBluetoothStateChanged(): " + state + " is not registered");
+        } else if (registeredCallbacks.size() == 0) {
+            Log.i(TAG, "unregisterBluetoothStateChanged(): Unregister the Receiver");
             parentContext.unregisterReceiver(this);
-            parentCallback = null;
-            isRegistered = false;
-        } else {
-            Log.w(TAG, "unregisterBluetoothReceiver(): bluetoothReceiver already unregistered");
         }
-        Log.i(TAG, "unregisterBluetoothReceiver(): Exit");
+
+        Log.i(TAG, "unregisterBluetoothStateChanged(): Exit");
     }
 }

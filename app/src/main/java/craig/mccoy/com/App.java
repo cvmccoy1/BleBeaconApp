@@ -9,7 +9,7 @@ import android.content.res.Resources;
 import android.util.Log;
 
 public class App extends Application {
-    private static final String TAG = "App";
+    private static final String TAG = "BLE:App";
 
     public static BluetoothManager bluetoothManager;
     public static Resources resources;
