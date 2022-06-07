@@ -14,6 +14,7 @@ import android.util.Log;
 import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
+import android.widget.TextView;
 import android.widget.Toast;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -26,13 +27,22 @@ public class MainActivity extends AppCompatActivity {
     private static final int REQUEST_CODE = 1234;
     private EditText editTextInput;
     private BluetoothReceiver bluetoothReceiver = null;
-
+    private String activityName;
+    
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-        Log.i(TAG, "onCreate(): Enter " + hashCode());
+        TextView text = findViewById(R.id.activity_name_text);
+        activityName = getIntent().getStringExtra("ACTIVITY_NAME");
+        if (activityName == null) {
+            activityName = text.getText().toString();
+        } else {
+            text.setText(activityName);
+        }
+
+        Log.i(TAG, "onCreate(): Enter " + activityName);
         editTextInput = findViewById(R.id.edit_text_input);
         bluetoothReceiver = new BluetoothReceiver(this);
         Log.i(TAG, "onCreate(): Exit");
@@ -40,37 +50,37 @@ public class MainActivity extends AppCompatActivity {
 
     @Override
     protected void onStart() {
-        Log.i(TAG, "onStart(): Enter/Exit " + hashCode());
+        Log.i(TAG, "onStart(): Enter/Exit " + activityName);
         super.onStart();
     }
 
     @Override
     protected void onResume() {
-        Log.i(TAG, "onResume(): Enter/Exit " + hashCode());
+        Log.i(TAG, "onResume(): Enter/Exit " + activityName);
         super.onResume();
     }
 
     @Override
     protected void onPause() {
-        Log.i(TAG, "onPause(): Enter/Exit " + hashCode());
+        Log.i(TAG, "onPause(): Enter/Exit " + activityName);
         super.onPause();
     }
 
     @Override
     protected void onStop() {
-        Log.i(TAG, "onStop(): Enter/Exit " + hashCode());
+        Log.i(TAG, "onStop(): Enter/Exit " + activityName);
         super.onStop();
     }
 
     @Override
     protected void onRestart() {
-        Log.i(TAG, "onRestart(): Enter/Exit " + hashCode());
+        Log.i(TAG, "onRestart(): Enter/Exit " + activityName);
         super.onRestart();
     }
 
     @Override
     protected void onDestroy() {
-        Log.i(TAG, "onDestroy(): Enter " + hashCode());
+        Log.i(TAG, "onDestroy(): Enter " + activityName);
         super.onDestroy();
         bluetoothReceiver.unregisterBluetoothStateChanged(BluetoothAdapter.STATE_ON);
         if (!isBleAdvertisingServiceRunning()) {
@@ -83,7 +93,7 @@ public class MainActivity extends AppCompatActivity {
 
     @Override
     public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
-        Log.i(TAG, "onRequestPermissionsResult(): Enter " + hashCode());
+        Log.i(TAG, "onRequestPermissionsResult(): Enter " + activityName);
         Log.i(TAG, "onRequestPermissionsResult(): requestCode =" + requestCode);
         Log.i(TAG, "onRequestPermissionsResult(): permissions =" + Arrays.toString(permissions));
         Log.i(TAG, "onRequestPermissionsResult(): grantResults =" + Arrays.toString(grantResults));
@@ -108,13 +118,13 @@ public class MainActivity extends AppCompatActivity {
     }
 
     public void onClickStartAdvertising(@SuppressWarnings("unused") View view) {
-        Log.i(TAG, "startService(): Enter "  + hashCode());
+        Log.i(TAG, "startService(): Enter "  + activityName);
         startBleAdvertising();
         Log.i(TAG, "startService(): Exit");
     }
 
     public void onClickStopAdvertising(@SuppressWarnings("unused") View view) {
-        Log.i(TAG, "stopAdvertising(): Enter"  + hashCode());
+        Log.i(TAG, "stopAdvertising(): Enter"  + activityName);
         stopBleAdvertising();
         Log.i(TAG, "stopAdvertising(): Exit");
     }

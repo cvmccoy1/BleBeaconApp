@@ -12,7 +12,6 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.core.app.NotificationCompat;
 
-//public class BleAdvertisingService extends Service implements IBluetoothReceiverCallback {
 public class BleAdvertisingService extends Service {
     private static final String TAG = "BLE:BleAdvertisingService";
 
@@ -36,6 +35,7 @@ public class BleAdvertisingService extends Service {
         Log.i(TAG, String.format("onStartCommand: inputExtra = %x", uniqueCode));
 
         Intent notificationIntent = new Intent(this, MainActivity.class);
+        notificationIntent.putExtra("ACTIVITY_NAME", "From Service");
         PendingIntent pendingIntent = PendingIntent.getActivity(this, 0, notificationIntent, PendingIntent.FLAG_IMMUTABLE);
 
         Notification notification = new NotificationCompat.Builder(this, getString(R.string.service_channel_id))
