@@ -27,7 +27,7 @@ public class BleAdvertisingManager {
             synchronized (BleAdvertisingManager.class) {
                 if(instance == null){
                     instance = new BleAdvertisingManager();
-                    BluetoothManager bluetoothManager = (BluetoothManager) App.bluetoothManager;
+                    BluetoothManager bluetoothManager = App.bluetoothManager;
                     if (bluetoothManager == null) {
                         Log.e(TAG, "getInstance(): Unable to access the Bluetooth Manager");
                     } else {

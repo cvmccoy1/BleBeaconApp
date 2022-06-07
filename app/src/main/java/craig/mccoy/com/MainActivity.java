@@ -228,8 +228,8 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void disableUiButtons() {
-        Button startAdvertisingButton = (Button) findViewById(R.id.start_advertising_button);
-        Button stopAdvertisingButton = (Button) findViewById(R.id.stop_advertising_button);
+        Button startAdvertisingButton = findViewById(R.id.start_advertising_button);
+        Button stopAdvertisingButton = findViewById(R.id.stop_advertising_button);
         startAdvertisingButton.setEnabled(false);
         stopAdvertisingButton.setEnabled(false);
     }

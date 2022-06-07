@@ -62,28 +62,6 @@ public class BleAdvertisingService extends Service {
         return START_NOT_STICKY;
     }
 
-/*    @Override
-    public void onBluetoothAdapterStateChange(int state) {
-        Log.i(TAG, "onBluetoothAdapterStateChange():state" + state);
-        switch (state){
-            case BluetoothAdapter.STATE_TURNING_ON:
-                Log.i(TAG, "The local Bluetooth adapter is turning on. However wait for STATE_ON before attempting to use the adapter.");
-                break;
-            case BluetoothAdapter.STATE_ON:
-                Log.i(TAG, "The local Bluetooth adapter is on, and ready for use.");
-                break;
-            case BluetoothAdapter.STATE_OFF:
-                Log.i(TAG, "The local Bluetooth adapter is off.");
-                break;
-            case BluetoothAdapter.STATE_TURNING_OFF:
-                Log.i(TAG, "The local Bluetooth adapter is turning off. Stop BLE Advertising.");
-                stopAdvertising();
-                stopSelf();
-                break;
-        }
-        Log.i(TAG, "onBluetoothAdapterStateChange():Exit");
-    }*/
-
     @Override
     public void onDestroy() {
         Log.i(TAG, "onDestroy(): Enter");
@@ -109,23 +87,4 @@ public class BleAdvertisingService extends Service {
         }
         Log.i(TAG, "stopAdvertising(): Exit");
     }
-
-/*
-    private void registerBluetoothReceiver() {
-        if (bluetoothReceiver == null) {
-            bluetoothReceiver = new BluetoothReceiver(this);
-            registerReceiver(bluetoothReceiver, new IntentFilter(BluetoothAdapter.ACTION_STATE_CHANGED));
-        } else {
-            Log.w(TAG, "registerBluetoothReceiver(): bluetoothReceiver already registered");
-        }
-    }
-
-    private void unregisterBluetoothReceiver() {
-        if (bluetoothReceiver != null) {
-            unregisterReceiver(bluetoothReceiver);
-            bluetoothReceiver = null;
-        } else {
-            Log.w(TAG, "unregisterBluetoothReceiver(): bluetoothReceiver already unregistered");
-        }
-    }*/
 }
