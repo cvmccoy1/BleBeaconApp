@@ -7,12 +7,16 @@ import android.bluetooth.le.AdvertiseCallback;
 import android.bluetooth.le.AdvertiseData;
 import android.bluetooth.le.AdvertiseSettings;
 import android.bluetooth.le.BluetoothLeAdvertiser;
-import android.util.Log;
 
 import androidx.annotation.NonNull;
 
 import java.nio.ByteBuffer;
 import java.util.UUID;
+
+enum BeaconType {
+    AltBeacon,
+    IBeacon
+}
 
 public class BleAdvertisingManager {
     private static final String TAG = "BLE:BleAdvertisingManager";
@@ -29,11 +33,11 @@ public class BleAdvertisingManager {
                     instance = new BleAdvertisingManager();
                     BluetoothManager bluetoothManager = App.bluetoothManager;
                     if (bluetoothManager == null) {
-                        Log.e(TAG, "getInstance(): Unable to access the Bluetooth Manager");
+                        MyLog.e(TAG, "getInstance(): Unable to access the Bluetooth Manager");
                     } else {
                         bluetoothAdapter = bluetoothManager.getAdapter();
                         if (bluetoothAdapter == null) {
-                            Log.e(TAG, "getInstance(): Unable to access the Bluetooth Adapter");
+                            MyLog.e(TAG, "getInstance(): Unable to access the Bluetooth Adapter");
                         }
                     }
                 }
@@ -44,7 +48,7 @@ public class BleAdvertisingManager {
 
     public boolean isBluetoothEnabled() {
         boolean isEnabled = bluetoothAdapter != null && bluetoothAdapter.isEnabled();
-        Log.i(TAG, "isBluetoothEnabled(): " + isEnabled);
+        MyLog.i(TAG, "isBluetoothEnabled(): " + isEnabled);
         return isEnabled;
     }
 
@@ -55,16 +59,16 @@ public class BleAdvertisingManager {
     @SuppressLint("MissingPermission")
     public void enableBluetooth() {
         boolean isEnabled = false;
-        Log.i(TAG, "isBluetoothEnabled(): Enter");
+        MyLog.i(TAG, "isBluetoothEnabled(): Enter");
         if (bluetoothAdapter != null) {
             isEnabled = bluetoothAdapter.enable();
         }
-        Log.i(TAG, "isBluetoothEnabled(): Exit " + isEnabled);
+        MyLog.i(TAG, "isBluetoothEnabled(): Exit " + isEnabled);
     }
 
     public boolean isBleAdvertisingSupported() {
         boolean isSupported = bluetoothAdapter != null && bluetoothAdapter.isMultipleAdvertisementSupported();
-        Log.i(TAG, "isBleAdvertisingSupported(): " + isSupported);
+        MyLog.i(TAG, "isBleAdvertisingSupported(): " + isSupported);
         return isSupported;
     }
 
@@ -73,21 +77,30 @@ public class BleAdvertisingManager {
      * permission.  Otherwise, this method will throw a permission denied exceptions.
      */
     @SuppressLint("MissingPermission")
-    public void startAdvertising(int uniqueCode) {
-        Log.i(TAG, "startAdvertising(): Enter");
+    public void startAdvertising(BeaconType beaconType, int uniqueCode) {
+        MyLog.i(TAG, "startAdvertising(): Enter");
         BluetoothLeAdvertiser bluetoothAdvertiser = getBluetoothLeAdvertiser();
 
         if (bluetoothAdvertiser != null) {
             AdvertiseSettings settings = getAdvertiseSettings();
-            AdvertiseData data = getAltBeaconAdvertiseData(uniqueCode);
+            AdvertiseData data;
+            switch (beaconType) {
+                case IBeacon:
+                    data = getIBeaconAdvertiseData();
+                    break;
+                case AltBeacon:
+                default:
+                    data = getAltBeaconAdvertiseData(uniqueCode);
+                    break;
+            }
             AdvertiseCallback advertisingCallback = getAdvertiseCallback();
 
             bluetoothAdvertiser.startAdvertising(settings, data, advertisingCallback);
         }
         else {
-            Log.e(TAG, "startAdvertising(): Failed");
+            MyLog.e(TAG, "startAdvertising(): Failed");
         }
-        Log.i(TAG, "startAdvertising(): Exit");
+        MyLog.i(TAG, "startAdvertising(): Exit");
     }
 
     /**
@@ -96,31 +109,31 @@ public class BleAdvertisingManager {
      */
     @SuppressLint("MissingPermission")
     public void stopAdvertising() {
-        Log.i(TAG, "stopAdvertising(): Enter");
+        MyLog.i(TAG, "stopAdvertising(): Enter");
         BluetoothLeAdvertiser bluetoothLeAdvertiser = getBluetoothLeAdvertiser();
 
         if (bluetoothLeAdvertiser != null) {
             AdvertiseCallback advertisingCallback = getAdvertiseCallback();
             bluetoothLeAdvertiser.stopAdvertising(advertisingCallback);
         } else {
-            Log.w(TAG, "stopAdvertising(): Failed...possibly due to Bluetooth being disabled by the user");
+            MyLog.w(TAG, "stopAdvertising(): Failed...possibly due to Bluetooth being disabled by the user");
         }
-        Log.i(TAG, "stopAdvertising(): Exit");
+        MyLog.i(TAG, "stopAdvertising(): Exit");
     }
 
     private BluetoothLeAdvertiser bluetoothLeAdvertiser = null;
 
     private BluetoothLeAdvertiser getBluetoothLeAdvertiser() {
-        Log.i(TAG, "getBluetoothLeAdvertiser(): Enter");
+        MyLog.i(TAG, "getBluetoothLeAdvertiser(): Enter");
         if (bluetoothAdapter != null) {
             if (bluetoothLeAdvertiser == null) {
                 bluetoothLeAdvertiser = bluetoothAdapter.getBluetoothLeAdvertiser();
             }
-            Log.i(TAG, "getBluetoothLeAdvertiser(): Exit");
+            MyLog.i(TAG, "getBluetoothLeAdvertiser(): Exit");
             return bluetoothLeAdvertiser;
         }
         else {
-            Log.e(TAG, "Unable to access the Bluetooth LE Advertiser...no bluetoothAdapter");
+            MyLog.e(TAG, "Unable to access the Bluetooth LE Advertiser...no bluetoothAdapter");
             return null;
         }
     }
@@ -150,9 +163,36 @@ public class BleAdvertisingManager {
         // Reference RSSI - A 1-byte value representing the average received signal strength
         // at 1m from the advertiser
         manufacturerData.put(22, (byte)0xCC); // reference RSSI (-52 dBm)
+        // Mfg Reserved
+        manufacturerData.put(23, (byte)0);
         // Mfg ID - using google's company ID
         int manufacturerId = 224;
 
+        return new AdvertiseData.Builder()
+                .addManufacturerData(manufacturerId, manufacturerData.array())
+                .build();
+    }
+
+    @NonNull
+    private AdvertiseData getIBeaconAdvertiseData() {
+        ByteBuffer manufacturerData = ByteBuffer.allocate(23);
+        // Beacon Code - 0xBEAC the AltBeacon advertisement code
+        manufacturerData.putShort(0, (short)0x0215); // iBeacon Identifier
+        // Beacon ID - UUID
+        byte[] uuid = getIdAsByte(UUID.fromString(App.resources.getString(R.string.ble_uuid)));
+        for (int i=2; i<=17; i++) {
+            manufacturerData.put(i, uuid[i-2]); // adding the UUID
+        }
+        // Major Version Number
+        manufacturerData.putShort(18, (short) 0x0001);
+        // Minor Version Number
+        manufacturerData.putShort(20, (short) 0x0000);
+        // Reference RSSI - A 1-byte value representing the average received signal strength
+        // at 1m from the advertiser
+        manufacturerData.put(22, (byte)0xCC); // reference RSSI (-52 dBm)
+
+        // Mfg ID - using apple's company ID
+        int manufacturerId = 76;
         return new AdvertiseData.Builder()
                 .addManufacturerData(manufacturerId, manufacturerData.array())
                 .build();
@@ -167,13 +207,13 @@ public class BleAdvertisingManager {
                     advertiseCallback = new AdvertiseCallback() {
                         @Override
                         public void onStartSuccess(AdvertiseSettings settingsInEffect) {
-                            Log.i(TAG, "Advertising onStartSuccess");
+                            MyLog.i(TAG, "Advertising onStartSuccess");
                             super.onStartSuccess(settingsInEffect);
                         }
 
                         @Override
                         public void onStartFailure(int errorCode) {
-                            Log.e(TAG, "Advertising onStartFailure: " + errorCode);
+                            MyLog.e(TAG, "Advertising onStartFailure: " + errorCode);
                             super.onStartFailure(errorCode);
                         }
                     };

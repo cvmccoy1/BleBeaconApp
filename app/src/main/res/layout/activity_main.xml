@@ -8,6 +8,35 @@
     android:padding="16dp"
     tools:context=".MainActivity">
 
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="@string/beacon_type_label"
+        android:textSize="28sp"
+        android:textStyle="bold"
+        />
+
+    <RadioGroup
+        android:id="@+id/beaconTypeGroupRadio"
+        android:layout_width="match_parent"
+        android:layout_height="99dp" >
+
+        <RadioButton
+            android:id="@+id/altBeaconRadioButton"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:textSize="24sp"
+            android:text="@string/alt_beacon_google"
+            android:checked="true"/>
+
+        <RadioButton
+            android:id="@+id/iBeaconRadioButton"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:textSize="24sp"
+            android:text="@string/i_beacon_apple" />
+    </RadioGroup>
+
     <EditText
         android:id="@+id/edit_text_input"
         android:layout_width="match_parent"

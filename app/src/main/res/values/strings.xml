@@ -4,7 +4,7 @@
     <string name="service_channel_name">BLE Beacon Service Channel</string>
     <string name="service_channel_id">bleBeaconServiceChannel</string>
     <string name="ble_advertising_service_title">BLE Advertising Service</string>
-    <string name="ble_advertising_service_text_format">Unique Code: %x</string>
+    <string name="ble_advertising_alt_beacon_text_format">Advertising an AltBeacon (Code: %x)</string>
     <string name="unique_code">uniqueCode</string>
     <string name="advertising_started">BLE Advertising has started</string>
     <string name="advertising_stopped">BLE Advertising has stopped</string>
@@ -13,6 +13,11 @@
     <string name="stop_advertising">Stop Advertising</string>
     <string name="unique_code_hint">Unique Code</string>
     <string name="ble_not_supported">BLE is not supported on this device</string>
-    <string name="ble_not_enabled">BLE not currently enabled</string>
     <string name="waiting_for_bluetooth_enable">Attempting to enable the bluetooth adapter</string>
+    <string name="beacon_type">BeaconType</string>
+    <string name="beacon_type_label">Beacon Type:</string>
+    <string name="alt_beacon_google">AltBeacon (Google)</string>
+    <string name="i_beacon_apple">iBeacon (Apple)</string>
+    <string name="ble_advertising_i_beacon_text">Advertising as iBeacon</string>
+    <string name="required_persmissions_not_granted">This app does not have the required permissions for BLE advertising</string>
 </resources>

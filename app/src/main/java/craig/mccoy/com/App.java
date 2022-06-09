@@ -6,7 +6,6 @@ import android.app.NotificationManager;
 import android.bluetooth.BluetoothManager;
 import android.content.Context;
 import android.content.res.Resources;
-import android.util.Log;
 
 public class App extends Application {
     private static final String TAG = "BLE:App";
@@ -18,11 +17,11 @@ public class App extends Application {
     public void onCreate() {
         super.onCreate();
 
-        Log.i(TAG, "onCreate(): Enter");
+        MyLog.i(TAG, "onCreate(): Enter");
         bluetoothManager = (BluetoothManager) getApplicationContext().getSystemService(Context.BLUETOOTH_SERVICE);
         resources = getResources();
         createNotificationChannel();
-        Log.i(TAG, "onCreate(): Exit");
+        MyLog.i(TAG, "onCreate(): Exit");
     }
 
     private void createNotificationChannel() {
