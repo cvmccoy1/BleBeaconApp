@@ -3,8 +3,8 @@
     <string name="ble_uuid" xmlns:tools="http://schemas.android.com/tools" tools:ignore="TypographyDashes">B8CE3F1D-D741-482A-B466-CE3F46B5B1C8</string>
     <string name="service_channel_name">BLE Beacon Service Channel</string>
     <string name="service_channel_id">bleBeaconServiceChannel</string>
-    <string name="ble_advertising_service_title">BLE Advertising Service</string>
-    <string name="ble_advertising_alt_beacon_text_format">Advertising an AltBeacon (Code: %x)</string>
+    <string name="ble_advertising_service_title">BLE Advertising Beacon</string>
+    <string name="ble_advertising_alt_beacon_text_format">Advertising as AltBeacon\n(Code: %x)</string>
     <string name="unique_code">uniqueCode</string>
     <string name="advertising_started">BLE Advertising has started</string>
     <string name="advertising_stopped">BLE Advertising has stopped</string>
