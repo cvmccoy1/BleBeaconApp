@@ -4,7 +4,6 @@
     <string name="service_channel_name">BLE Beacon Service Channel</string>
     <string name="service_channel_id">bleBeaconServiceChannel</string>
     <string name="ble_advertising_service_title">BLE Advertising Beacon</string>
-    <string name="ble_advertising_alt_beacon_text_format">Advertising as AltBeacon\n(Code: %x)</string>
     <string name="unique_code">uniqueCode</string>
     <string name="advertising_started">BLE Advertising has started</string>
     <string name="advertising_stopped">BLE Advertising has stopped</string>
@@ -18,6 +17,9 @@
     <string name="beacon_type_label">Beacon Type:</string>
     <string name="alt_beacon_google">AltBeacon (Google)</string>
     <string name="i_beacon_apple">iBeacon (Apple)</string>
+    <string name="ble_advertising_alt_beacon_text_format"><b>Advertising as AltBeacon \n</b><b>Unique Code = %x</b></string>
     <string name="ble_advertising_i_beacon_text">Advertising as iBeacon</string>
-    <string name="required_persmissions_not_granted">This app does not have the required permissions for BLE advertising</string>
+    <string name="required_permissions_not_granted">This app does not have the required permissions for BLE advertising</string>
+    <string name="unique_code_string">uniqueCode</string>
+    <string name="checked_beacon_type_id">beaconType</string>
 </resources>

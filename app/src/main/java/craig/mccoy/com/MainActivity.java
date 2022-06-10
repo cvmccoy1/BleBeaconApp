@@ -8,10 +8,10 @@ import androidx.core.content.ContextCompat;
 import android.Manifest;
 import android.bluetooth.BluetoothAdapter;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.os.Bundle;
 import android.view.View;
-import android.widget.Button;
 import android.widget.EditText;
 import android.widget.RadioGroup;
 import android.widget.TextView;
@@ -25,10 +25,12 @@ public class MainActivity extends AppCompatActivity {
 
     private Intent serviceIntent = null;
     private BluetoothReceiver bluetoothReceiver = null;
+    private SharedPreferences sharedPreferences = null;
 
     private String activityName;
     private EditText editTextInput;
     private RadioGroup beaconTypeRadioGroup;
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -45,17 +47,33 @@ public class MainActivity extends AppCompatActivity {
         }
 
         MyLog.i(TAG, "onCreate(): Enter " + activityName);
+
         serviceIntent = new Intent(this, BleAdvertisingService.class);
+        bluetoothReceiver = new BluetoothReceiver(this);
+        sharedPreferences = getPreferences(MODE_PRIVATE);
+
         beaconTypeRadioGroup = findViewById(R.id.beaconTypeGroupRadio);
         editTextInput = findViewById(R.id.edit_text_input);
-        bluetoothReceiver = new BluetoothReceiver(this);
+
         MyLog.i(TAG, "onCreate(): Exit");
     }
 
     @Override
     protected void onStart() {
-        MyLog.i(TAG, "onStart(): Enter/Exit " + activityName);
+        MyLog.i(TAG, "onStart(): Enter" + activityName);
         super.onStart();
+
+        String uniqueCodeString = sharedPreferences.getString(getString(R.string.unique_code_string), "");
+        editTextInput.setText(uniqueCodeString);
+
+        int checkedBeaconTypeId = sharedPreferences.getInt(getString(R.string.checked_beacon_type_id), R.id.altBeaconRadioButton);
+        beaconTypeRadioGroup.clearCheck();
+        beaconTypeRadioGroup.check(checkedBeaconTypeId);
+
+        findViewById(R.id.stop_advertising_button).setEnabled(isBleAdvertisingServiceRunning());
+
+        setTextInputEnabled();
+        MyLog.i(TAG, "onStart(): Exit");
     }
 
     @Override
@@ -95,6 +113,12 @@ public class MainActivity extends AppCompatActivity {
         MyLog.i(TAG, "onDestroy(): Exit");
     }
 
+    public void onRadioButtonClicked(@SuppressWarnings("unused") View view) {
+        MyLog.i(TAG, "onRadioButtonClicked(): Enter");
+        setTextInputEnabled();
+        MyLog.i(TAG, "onRadioButtonClicked(): Exit");
+    }
+
     public void onClickStartAdvertising(@SuppressWarnings("unused") View view) {
         MyLog.i(TAG, "startService(): Enter "  + activityName);
         startBleAdvertising();
@@ -108,6 +132,10 @@ public class MainActivity extends AppCompatActivity {
     }
 
     public void startBleAdvertising() {
+        SharedPreferences.Editor editor = sharedPreferences.edit();
+        editor.putString(getString(R.string.unique_code_string), editTextInput.getText().toString());
+        editor.putInt(getString(R.string.checked_beacon_type_id), beaconTypeRadioGroup.getCheckedRadioButtonId());
+        editor.apply();
         checkForBleSupported();
     }
 
@@ -163,7 +191,7 @@ public class MainActivity extends AppCompatActivity {
             if (hasPermission) {
                 okToAttemptAdvertising();
             } else {
-                Toast.makeText(this, R.string.required_persmissions_not_granted, Toast.LENGTH_LONG).show();
+                Toast.makeText(this, R.string.required_permissions_not_granted, Toast.LENGTH_LONG).show();
             }
         } else {
             super.onRequestPermissionsResult(requestCode, permissions, grantResults);
@@ -209,6 +237,7 @@ public class MainActivity extends AppCompatActivity {
 
         // Stop any previously started BLE Advertising Service
         stopAdvertisingService();
+        findViewById(R.id.stop_advertising_button).setEnabled(true);
 
         // Send the beaconType and uniqueCode to the service
         String beaconType = (beaconTypeRadioGroup.getCheckedRadioButtonId() == R.id.altBeaconRadioButton ? BeaconType.AltBeacon : BeaconType.IBeacon).name();
@@ -225,6 +254,7 @@ public class MainActivity extends AppCompatActivity {
     private void stopAdvertisingService() {
         if (isBleAdvertisingServiceRunning()) {
             stopService(serviceIntent);
+            findViewById(R.id.stop_advertising_button).setEnabled(false);
             Toast.makeText(this, getString(R.string.advertising_stopped), Toast.LENGTH_LONG).show();
         }
     }
@@ -235,10 +265,14 @@ public class MainActivity extends AppCompatActivity {
         return isRunning;
     }
 
+    private void setTextInputEnabled() {
+        boolean isTextInputEnabled= beaconTypeRadioGroup.getCheckedRadioButtonId() == R.id.altBeaconRadioButton;
+        MyLog.i(TAG, "setTextInputEnabled(): isTextInputEnabled = " + isTextInputEnabled);
+        editTextInput.setEnabled(isTextInputEnabled);
+    }
+
     private void disableUiButtons() {
-        Button startAdvertisingButton = findViewById(R.id.start_advertising_button);
-        Button stopAdvertisingButton = findViewById(R.id.stop_advertising_button);
-        startAdvertisingButton.setEnabled(false);
-        stopAdvertisingButton.setEnabled(false);
+        findViewById(R.id.start_advertising_button).setEnabled(false);
+        findViewById(R.id.stop_advertising_button).setEnabled(false);
     }
 }

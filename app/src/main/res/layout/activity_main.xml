@@ -27,6 +27,7 @@
             android:layout_height="wrap_content"
             android:textSize="24sp"
             android:text="@string/alt_beacon_google"
+            android:onClick="onRadioButtonClicked"
             android:checked="true"/>
 
         <RadioButton
@@ -34,7 +35,8 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:textSize="24sp"
-            android:text="@string/i_beacon_apple" />
+            android:text="@string/i_beacon_apple"
+            android:onClick="onRadioButtonClicked" />
     </RadioGroup>
 
     <EditText
