@@ -1,74 +1,90 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<LinearLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:gravity="center"
     android:orientation="vertical"
-    android:padding="16dp"
+    android:padding="60dp"
+    android:background="@color/light_green"
     tools:context=".MainActivity">
 
     <TextView
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:text="@string/beacon_type_label"
+        android:textColor="@color/black"
         android:textSize="28sp"
-        android:textStyle="bold"
-        />
+        android:textStyle="bold" />
 
     <RadioGroup
         android:id="@+id/beaconTypeGroupRadio"
         android:layout_width="match_parent"
-        android:layout_height="99dp" >
+        android:layout_height="wrap_content">
 
         <RadioButton
             android:id="@+id/altBeaconRadioButton"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:textSize="24sp"
-            android:text="@string/alt_beacon_google"
+            android:checked="true"
             android:onClick="onRadioButtonClicked"
-            android:checked="true"/>
+            android:text="@string/alt_beacon_google"
+            android:textSize="20sp" />
+
+        <EditText
+            android:id="@+id/edit_text_input"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:autofillHints=""
+            android:hint="@string/unique_code_hint"
+            android:inputType="number"
+            android:maxLength="8"
+            android:minHeight="48dp"
+            android:layout_marginStart="30dp"
+            android:textColorHint="#78909C" />
 
         <RadioButton
             android:id="@+id/iBeaconRadioButton"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:textSize="24sp"
+            android:onClick="onRadioButtonClicked"
             android:text="@string/i_beacon_apple"
-            android:onClick="onRadioButtonClicked" />
+            android:textSize="20sp" />
     </RadioGroup>
 
-    <EditText
-        android:id="@+id/edit_text_input"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:autofillHints=""
-        android:hint="@string/unique_code_hint"
-        android:inputType="number"
-        android:maxLength="8"
-        android:minHeight="48dp"
-        android:textColorHint="#78909C" />
 
-    <Button
-        android:id="@+id/start_advertising_button"
+    <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:onClick="onClickStartAdvertising"
-        android:text="@string/start_advertising" />
+        android:orientation="vertical"
+        android:gravity="center_horizontal"
+        android:paddingTop="30dp">
 
-    <Button
-        android:id="@+id/stop_advertising_button"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:onClick="onClickStopAdvertising"
-        android:text="@string/stop_advertising" />
+        <Button
+            android:id="@+id/start_advertising_button"
+            android:layout_width="200dp"
+            android:layout_height="wrap_content"
+            android:textColor="@color/white"
+            android:onClick="onClickStartAdvertising"
+            android:text="@string/start_advertising" />
+
+        <Button
+            android:id="@+id/stop_advertising_button"
+            android:layout_width="200dp"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="20dp"
+            android:textColor="@color/white"
+            android:onClick="onClickStopAdvertising"
+            android:text="@string/stop_advertising" />
+
+    </LinearLayout>
 
     <TextView
         android:id="@+id/activity_name_text"
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:text="From App"
-        />
+        android:layout_height="match_parent"
+        android:layout_marginTop="50dp"
+        android:gravity="center|bottom"
+        android:text="From Application" />
 
 </LinearLayout>
