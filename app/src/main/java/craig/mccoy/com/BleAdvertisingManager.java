@@ -22,29 +22,26 @@ enum BeaconType {
 public class BleAdvertisingManager {
     private static final String TAG = "BLE:BleAdvertisingManager";
 
-    private static volatile BleAdvertisingManager instance;
-    private static BluetoothAdapter bluetoothAdapter;
+    private BluetoothAdapter bluetoothAdapter = null;
+    private BluetoothLeAdvertiser bluetoothLeAdvertiser = null;
 
-    private BleAdvertisingManager() {}
-
-    public static BleAdvertisingManager getInstance() {
-        if (instance == null){
-            synchronized (BleAdvertisingManager.class) {
-                if(instance == null){
-                    instance = new BleAdvertisingManager();
-                    BluetoothManager bluetoothManager = App.bluetoothManager;
-                    if (bluetoothManager == null) {
-                        MyLog.e(TAG, "getInstance(): Unable to access the Bluetooth Manager");
-                    } else {
-                        bluetoothAdapter = bluetoothManager.getAdapter();
-                        if (bluetoothAdapter == null) {
-                            MyLog.e(TAG, "getInstance(): Unable to access the Bluetooth Adapter");
-                        }
-                    }
+    public BleAdvertisingManager() {
+        MyLog.i(TAG, "Constructor(): Enter");
+        BluetoothManager bluetoothManager = App.getBluetoothManager();
+        if (bluetoothManager != null) {
+            bluetoothAdapter = bluetoothManager.getAdapter();
+            if (bluetoothAdapter != null) {
+                bluetoothLeAdvertiser = bluetoothAdapter.getBluetoothLeAdvertiser();
+                if (bluetoothLeAdvertiser == null) {
+                    MyLog.e(TAG, "Constructor(): Unable to access the Bluetooth LE Advertiser");
                 }
+            } else {
+                MyLog.e(TAG, "Constructor(): Unable to access the Bluetooth Adapter");
             }
+        } else {
+            MyLog.e(TAG, "Constructor(): Unable to access the Bluetooth Manager");
         }
-        return instance;
+        MyLog.i(TAG, "Constructor(): Exit");
     }
 
     public boolean isBluetoothEnabled() {
@@ -59,12 +56,8 @@ public class BleAdvertisingManager {
      */
     @SuppressLint("MissingPermission")
     public void enableBluetooth() {
-        boolean isEnabled = false;
-        MyLog.i(TAG, "isBluetoothEnabled(): Enter");
-        if (bluetoothAdapter != null) {
-            isEnabled = bluetoothAdapter.enable();
-        }
-        MyLog.i(TAG, "isBluetoothEnabled(): Exit " + isEnabled);
+        boolean isEnabled = bluetoothAdapter != null && bluetoothAdapter.enable();
+        MyLog.i(TAG, "enableBluetooth(): isEnabled" + isEnabled);
     }
 
     public boolean isBleAdvertisingSupported() {
@@ -80,14 +73,13 @@ public class BleAdvertisingManager {
     @SuppressLint("MissingPermission")
     public void startAdvertising(BeaconType beaconType, int uniqueCode) {
         MyLog.i(TAG, "startAdvertising(): Enter");
-        BluetoothLeAdvertiser bluetoothAdvertiser = getBluetoothLeAdvertiser();
 
-        if (bluetoothAdvertiser != null) {
+        if (bluetoothLeAdvertiser != null) {
             AdvertiseSettings settings = getAdvertiseSettings();
             AdvertiseData data = getAdvertiseData(beaconType, uniqueCode);
-            AdvertiseCallback advertisingCallback = getAdvertiseCallback();
+            AdvertiseCallback advertisingCallback = App.getAdvertiseCallback(true);
 
-            bluetoothAdvertiser.startAdvertising(settings, data, advertisingCallback);
+            bluetoothLeAdvertiser.startAdvertising(settings, data, advertisingCallback);
         }
         else {
             MyLog.e(TAG, "startAdvertising(): Failed");
@@ -102,36 +94,18 @@ public class BleAdvertisingManager {
     @SuppressLint("MissingPermission")
     public void stopAdvertising() {
         MyLog.i(TAG, "stopAdvertising(): Enter");
-        BluetoothLeAdvertiser bluetoothLeAdvertiser = getBluetoothLeAdvertiser();
 
-        if (bluetoothLeAdvertiser != null) {
-            AdvertiseCallback advertisingCallback = getAdvertiseCallback();
-            bluetoothLeAdvertiser.stopAdvertising(advertisingCallback);
+        AdvertiseCallback callback = App.getAdvertiseCallback(false);
+        if (bluetoothLeAdvertiser != null && callback != null) {
+            bluetoothLeAdvertiser.stopAdvertising(callback);
         } else {
-            MyLog.w(TAG, "stopAdvertising(): Failed...possibly due to Bluetooth being disabled by the user");
+            MyLog.e(TAG, "stopAdvertising(): Failed");
         }
         MyLog.i(TAG, "stopAdvertising(): Exit");
     }
 
-    private BluetoothLeAdvertiser bluetoothLeAdvertiser = null;
-
-    private BluetoothLeAdvertiser getBluetoothLeAdvertiser() {
-        MyLog.i(TAG, "getBluetoothLeAdvertiser(): Enter");
-        if (bluetoothAdapter != null) {
-            if (bluetoothLeAdvertiser == null) {
-                bluetoothLeAdvertiser = bluetoothAdapter.getBluetoothLeAdvertiser();
-            }
-            MyLog.i(TAG, "getBluetoothLeAdvertiser(): Exit");
-            return bluetoothLeAdvertiser;
-        }
-        else {
-            MyLog.e(TAG, "Unable to access the Bluetooth LE Advertiser...no bluetoothAdapter");
-            return null;
-        }
-    }
-
     @NonNull
-    private AdvertiseSettings getAdvertiseSettings() {
+    private static AdvertiseSettings getAdvertiseSettings() {
         return new AdvertiseSettings.Builder()
                 .setAdvertiseMode(AdvertiseSettings.ADVERTISE_MODE_LOW_POWER)
                 .setTxPowerLevel(AdvertiseSettings.ADVERTISE_TX_POWER_MEDIUM)
@@ -141,7 +115,7 @@ public class BleAdvertisingManager {
     }
 
     @NonNull
-    private AdvertiseData getAdvertiseData(BeaconType beaconType, int uniqueCode) {
+    private static AdvertiseData getAdvertiseData(BeaconType beaconType, int uniqueCode) {
         AdvertiseData data;
         switch (beaconType) {
             case AltBeacon:
@@ -158,7 +132,7 @@ public class BleAdvertisingManager {
     }
 
     @NonNull
-    private AdvertiseData getBle1MPhyAdvertiseData() {
+    private static AdvertiseData getBle1MPhyAdvertiseData() {
         return new AdvertiseData.Builder()
                 .setIncludeDeviceName(true)
                 .setIncludeTxPowerLevel(true)
@@ -166,12 +140,12 @@ public class BleAdvertisingManager {
     }
 
     @NonNull
-    private AdvertiseData getAltBeaconAdvertiseData(int code) {
+    private static AdvertiseData getAltBeaconAdvertiseData(int code) {
         ByteBuffer manufacturerData = ByteBuffer.allocate(24);
         // Beacon Code - 0xBEAC the AltBeacon advertisement code
         manufacturerData.putShort(0, (short)0xBEAC); // AltBeacon Identifier
         // Beacon ID - UUID
-        byte[] uuid = getIdAsByte(UUID.fromString(App.resources.getString(R.string.ble_uuid)));
+        byte[] uuid = getIdAsByte(UUID.fromString(App.getAppString(R.string.ble_uuid)));
         for (int i=2; i<=17; i++) {
             manufacturerData.put(i, uuid[i-2]); // adding the UUID
         }
@@ -191,12 +165,12 @@ public class BleAdvertisingManager {
     }
 
     @NonNull
-    private AdvertiseData getIBeaconAdvertiseData() {
+    private static AdvertiseData getIBeaconAdvertiseData() {
         ByteBuffer manufacturerData = ByteBuffer.allocate(23);
         // Beacon Code - 0xBEAC the AltBeacon advertisement code
         manufacturerData.putShort(0, (short)0x0215); // iBeacon Identifier
         // Beacon ID - UUID
-        byte[] uuid = getIdAsByte(UUID.fromString(App.resources.getString(R.string.ble_uuid)));
+        byte[] uuid = getIdAsByte(UUID.fromString(App.getAppString(R.string.ble_uuid)));
         for (int i=2; i<=17; i++) {
             manufacturerData.put(i, uuid[i-2]); // adding the UUID
         }
@@ -213,31 +187,6 @@ public class BleAdvertisingManager {
         return new AdvertiseData.Builder()
                 .addManufacturerData(manufacturerId, manufacturerData.array())
                 .build();
-    }
-
-    private volatile AdvertiseCallback advertiseCallback = null;
-    @NonNull
-    private AdvertiseCallback getAdvertiseCallback() {
-        if (advertiseCallback == null) {
-            synchronized (BleAdvertisingManager.class) {
-                if (advertiseCallback == null) {
-                    advertiseCallback = new AdvertiseCallback() {
-                        @Override
-                        public void onStartSuccess(AdvertiseSettings settingsInEffect) {
-                            MyLog.i(TAG, "Advertising onStartSuccess");
-                            super.onStartSuccess(settingsInEffect);
-                        }
-
-                        @Override
-                        public void onStartFailure(int errorCode) {
-                            MyLog.e(TAG, "Advertising onStartFailure: " + errorCode);
-                            super.onStartFailure(errorCode);
-                        }
-                    };
-                }
-            }
-        }
-        return advertiseCallback;
     }
 
     private static byte[] getIdAsByte(java.util.UUID uuid)

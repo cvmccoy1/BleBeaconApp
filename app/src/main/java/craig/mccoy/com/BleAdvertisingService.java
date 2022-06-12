@@ -28,6 +28,7 @@ public class BleAdvertisingService extends Service {
     @Override
     public int onStartCommand(@NonNull Intent intent, int flags, int startId) {
         MyLog.i(TAG, String.format("onStartCommand(%o, %o)", flags, startId));
+        stopAdvertising();
         isServiceAdvertising = true;
 
         String beaconTypeString = intent.getStringExtra(getString(R.string.beacon_type));
@@ -48,7 +49,7 @@ public class BleAdvertisingService extends Service {
 
         startForeground(1, notification);
 
-        BleAdvertisingManager.getInstance().startAdvertising(beaconType, uniqueCode);
+        new BleAdvertisingManager().startAdvertising(beaconType, uniqueCode);
 
         bluetoothReceiver.registerBluetoothStateChanged(BluetoothAdapter.STATE_TURNING_OFF, () -> {
             MyLog.i(TAG, "The local Bluetooth adapter is turning off. Stop BLE Advertising.");
@@ -80,7 +81,10 @@ public class BleAdvertisingService extends Service {
     @Override
     public void onDestroy() {
         MyLog.i(TAG, "onDestroy(): Enter");
-        bluetoothReceiver.unregisterBluetoothStateChanged(BluetoothAdapter.STATE_TURNING_OFF);
+        if (bluetoothReceiver != null) {
+            bluetoothReceiver.unregisterBluetoothStateChanged(BluetoothAdapter.STATE_TURNING_OFF);
+            bluetoothReceiver = null;
+        }
         stopAdvertising();
         super.onDestroy();
         MyLog.i(TAG, "onDestroy(): Exit");
@@ -96,7 +100,7 @@ public class BleAdvertisingService extends Service {
     private void stopAdvertising() {
         MyLog.i(TAG, "stopAdvertising():isServiceAdvertising = " + isServiceAdvertising);
         if (isServiceAdvertising) {
-            BleAdvertisingManager.getInstance().stopAdvertising();
+            new BleAdvertisingManager().stopAdvertising();
             isServiceAdvertising = false;
         }
         MyLog.i(TAG, "stopAdvertising(): Exit");

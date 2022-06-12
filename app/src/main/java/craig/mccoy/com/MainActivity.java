@@ -24,7 +24,7 @@ public class MainActivity extends AppCompatActivity {
     private static final String TAG = "BLE:MainActivity";
     private static final int REQUEST_CODE = 1234;
 
-    private Intent serviceIntent = null;
+    private BleAdvertisingManager bleAdvertisingManager = null;
     private BluetoothReceiver bluetoothReceiver = null;
     private SharedPreferences sharedPreferences = null;
 
@@ -38,6 +38,25 @@ public class MainActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
+        MyLog.i(TAG, "onCreate(): Enter " + activityName);
+
+        beaconTypeRadioGroup = findViewById(R.id.beaconTypeGroupRadio);
+        editTextInput = findViewById(R.id.edit_text_input);
+
+        MyLog.i(TAG, "onCreate(): Exit");
+    }
+
+    @Override
+    protected void onRestart() {
+        MyLog.i(TAG, "onRestart(): Enter/Exit " + activityName);
+        super.onRestart();
+    }
+
+    @Override
+    protected void onStart() {
+        MyLog.i(TAG, "onStart(): Enter" + activityName);
+        super.onStart();
+
         TextView text = findViewById(R.id.activity_name_text);
         activityName = getIntent().getStringExtra("ACTIVITY_NAME");
         MyLog.i(TAG, "onCreate() activityName = " + activityName);
@@ -47,22 +66,8 @@ public class MainActivity extends AppCompatActivity {
             text.setText(activityName);
         }
 
-        MyLog.i(TAG, "onCreate(): Enter " + activityName);
-
-        serviceIntent = new Intent(this, BleAdvertisingService.class);
-        bluetoothReceiver = new BluetoothReceiver(this);
+        bleAdvertisingManager = new BleAdvertisingManager();
         sharedPreferences = getPreferences(MODE_PRIVATE);
-
-        beaconTypeRadioGroup = findViewById(R.id.beaconTypeGroupRadio);
-        editTextInput = findViewById(R.id.edit_text_input);
-
-        MyLog.i(TAG, "onCreate(): Exit");
-    }
-
-    @Override
-    protected void onStart() {
-        MyLog.i(TAG, "onStart(): Enter" + activityName);
-        super.onStart();
 
         String uniqueCodeString = sharedPreferences.getString(getString(R.string.unique_code_string), "");
         editTextInput.setText(uniqueCodeString);
@@ -76,6 +81,7 @@ public class MainActivity extends AppCompatActivity {
         setTextInputEnabled();
         MyLog.i(TAG, "onStart(): Exit");
     }
+
 
     @Override
     protected void onResume() {
@@ -91,26 +97,23 @@ public class MainActivity extends AppCompatActivity {
 
     @Override
     protected void onStop() {
-        MyLog.i(TAG, "onStop(): Enter/Exit " + activityName);
+        MyLog.i(TAG, "onStop(): Enter " + activityName);
         super.onStop();
-    }
-
-    @Override
-    protected void onRestart() {
-        MyLog.i(TAG, "onRestart(): Enter/Exit " + activityName);
-        super.onRestart();
+        destroyBluetoothReceiver();
+        bleAdvertisingManager = null;
+        sharedPreferences = null;
+        MyLog.i(TAG, "onStop(): Exit " + activityName);
     }
 
     @Override
     protected void onDestroy() {
         MyLog.i(TAG, "onDestroy(): Enter " + activityName);
-        super.onDestroy();
-        bluetoothReceiver.unregisterBluetoothStateChanged(BluetoothAdapter.STATE_ON);
         if (!isBleAdvertisingServiceRunning()) {
-            MyLog.i(TAG, "onDestroy(): destroying Activity while the Service is not running...kill application");
+            MyLog.i(TAG, "onDestroy(): destroying Activity while the Service is not running...finishAndRemoveTask()");
             finishAndRemoveTask();
-            System.exit(0);
         }
+        MyLog.i(TAG, "onDestroy(): calling super.onDestroy()");
+        super.onDestroy();
         MyLog.i(TAG, "onDestroy(): Exit");
     }
 
@@ -121,15 +124,15 @@ public class MainActivity extends AppCompatActivity {
     }
 
     public void onClickStartAdvertising(@SuppressWarnings("unused") View view) {
-        MyLog.i(TAG, "startService(): Enter "  + activityName);
+        MyLog.i(TAG, "onClickStartAdvertising(): Enter "  + activityName);
         startBleAdvertising();
-        MyLog.i(TAG, "startService(): Exit");
+        MyLog.i(TAG, "onClickStartAdvertising(): Exit");
     }
 
     public void onClickStopAdvertising(@SuppressWarnings("unused") View view) {
-        MyLog.i(TAG, "stopAdvertising(): Enter"  + activityName);
+        MyLog.i(TAG, "onClickStopAdvertising(): Enter "  + activityName);
         stopBleAdvertising();
-        MyLog.i(TAG, "stopAdvertising(): Exit");
+        MyLog.i(TAG, "onClickStopAdvertising(): Exit");
     }
 
     public void startBleAdvertising() {
@@ -203,17 +206,18 @@ public class MainActivity extends AppCompatActivity {
     private void okToAttemptAdvertising()
     {
         MyLog.i(TAG, "okToStartAdvertising(): Enter");
-        if (BleAdvertisingManager.getInstance().isBluetoothEnabled()) {
+        if (bleAdvertisingManager.isBluetoothEnabled()) {
             checkForBleAdvertisingSupported();
         } else {
             // Bluetooth not enabled, so attempt to enable it and wait for the BT adapter to signal is it ready for use
+            bluetoothReceiver = new BluetoothReceiver(this);
             bluetoothReceiver.registerBluetoothStateChanged(BluetoothAdapter.STATE_ON, () -> {
                 MyLog.i(TAG, "BluetoothReceiver Callback: The local Bluetooth adapter is on and ready for use.");
-                bluetoothReceiver.unregisterBluetoothStateChanged(BluetoothAdapter.STATE_ON);
+                destroyBluetoothReceiver();
                 checkForBleAdvertisingSupported();
             });
             // The following should cause the callback from the previous statement to be executed when the BT adapter is ready
-            BleAdvertisingManager.getInstance().enableBluetooth();
+            bleAdvertisingManager.enableBluetooth();
             MyLog.w(TAG, "okToStartAdvertising(): Attempting to enable the bluetooth adapter...wait for it to finish enabling");
             Toast.makeText(this, R.string.waiting_for_bluetooth_enable, Toast.LENGTH_SHORT).show();
         }
@@ -223,7 +227,7 @@ public class MainActivity extends AppCompatActivity {
     private void checkForBleAdvertisingSupported() {
         MyLog.i(TAG, "checkBleAdvertisingSupported(): Enter");
 
-        if (BleAdvertisingManager.getInstance().isBleAdvertisingSupported()) {
+        if (bleAdvertisingManager.isBleAdvertisingSupported()) {
             startAdvertisingService();
         } else {
             MyLog.w(TAG, "BLE Advertisement is not supported...disable buttons");
@@ -239,11 +243,9 @@ public class MainActivity extends AppCompatActivity {
         // Stop any previously started BLE Advertising Service
         stopAdvertisingService();
 
-        // Send the beaconType (and uniqueCode, if used)  to the service
-        setIntentExtra();
-
         // Start the service as a Foreground Service so the system won't kill it after 15 minutes
-        ContextCompat.startForegroundService(this, serviceIntent);
+        App.serviceIntent = getServiceIntent();
+        ContextCompat.startForegroundService(this, App.serviceIntent);
 
         // Enable the 'Stop Advertising' button
         findViewById(R.id.stop_advertising_button).setEnabled(true);
@@ -255,30 +257,49 @@ public class MainActivity extends AppCompatActivity {
     }
 
     @SuppressLint("NonConstantResourceId")
-    private void setIntentExtra() {
+    private Intent getServiceIntent() {
+        Intent  intent = new Intent(this, BleAdvertisingService.class);
         int beaconTypeID = beaconTypeRadioGroup.getCheckedRadioButtonId();
         switch (beaconTypeID) {
             case R.id.altBeaconRadioButton:
-                serviceIntent.putExtra(getString(R.string.beacon_type), BeaconType.AltBeacon.name());
+                intent.putExtra(getString(R.string.beacon_type), BeaconType.AltBeacon.name());
                 String input = editTextInput.getText().toString();
                 int uniqueCode = input.isEmpty() ? 0 : Integer.parseUnsignedInt(input, 16);
-                serviceIntent.putExtra(getString(R.string.unique_code), uniqueCode);
+                intent.putExtra(getString(R.string.unique_code), uniqueCode);
                 break;
             case R.id.iBeaconRadioButton:
-                serviceIntent.putExtra(getString(R.string.beacon_type), BeaconType.IBeacon.name());
+                intent.putExtra(getString(R.string.beacon_type), BeaconType.IBeacon.name());
                 break;
             case R.id.ble1mRadioButton:
             default:
-                serviceIntent.putExtra(getString(R.string.beacon_type), BeaconType.Ble1MBeacon.name());
+                intent.putExtra(getString(R.string.beacon_type), BeaconType.Ble1MBeacon.name());
                 break;
         }
+        return intent;
     }
 
     private void stopAdvertisingService() {
-        if (isBleAdvertisingServiceRunning()) {
-            stopService(serviceIntent);
-            findViewById(R.id.stop_advertising_button).setEnabled(false);
-            Toast.makeText(this, getString(R.string.advertising_stopped), Toast.LENGTH_LONG).show();
+        MyLog.i(TAG, "stopAdvertisingService(): Enter");
+        if (App.serviceIntent != null) {
+            if (stopService(App.serviceIntent)) {
+                MyLog.i(TAG, "stopAdvertisingService(): Stopped the BLE Service");
+                Toast.makeText(this, getString(R.string.advertising_stopped), Toast.LENGTH_LONG).show();
+            } else {
+                MyLog.i(TAG, "stopAdvertisingService(): BLE Service was not running");
+            }
+            App.serviceIntent = null;
+        }
+        findViewById(R.id.stop_advertising_button).setEnabled(false);
+        MyLog.i(TAG, "stopAdvertisingService(): Exit");
+
+    }
+
+    private void destroyBluetoothReceiver() {
+        synchronized (this) {
+            if (bluetoothReceiver != null) {
+                bluetoothReceiver.unregisterBluetoothStateChanged(BluetoothAdapter.STATE_ON);
+                bluetoothReceiver = null;
+            }
         }
     }
 
