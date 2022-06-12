@@ -6,13 +6,6 @@ public class MyLog {
 
     private static final boolean LOGGING = BuildConfig.DEBUG;
 
-
-    public static void d(String tag, String message) {
-        if (LOGGING) {
-            Log.d(tag, message);
-        }
-    }
-
     public static void i(String tag, String message) {
         if (LOGGING) {
             Log.i(tag, message);

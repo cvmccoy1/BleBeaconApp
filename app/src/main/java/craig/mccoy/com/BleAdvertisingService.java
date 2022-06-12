@@ -60,15 +60,18 @@ public class BleAdvertisingService extends Service {
         return START_NOT_STICKY;
     }
 
-    private String getContextText( BeaconType beaconType, int uniqueCode) {
+    private String getContextText(BeaconType beaconType, int uniqueCode) {
         String contentText;
         switch (beaconType) {
+            case AltBeacon:
+                contentText = String.format(getString(R.string.ble_advertising_alt_beacon_text_format), uniqueCode);
+                break;
             case IBeacon:
                 contentText = getString(R.string.ble_advertising_i_beacon_text);
                 break;
-            case AltBeacon:
+            case Ble1MBeacon:
             default:
-                contentText = String.format(getString(R.string.ble_advertising_alt_beacon_text_format), uniqueCode);
+                contentText = getString(R.string.ble_advertising_ble_1m_phy_text);
                 break;
         }
         return contentText;

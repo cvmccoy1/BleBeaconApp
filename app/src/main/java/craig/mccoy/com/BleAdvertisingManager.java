@@ -14,6 +14,7 @@ import java.nio.ByteBuffer;
 import java.util.UUID;
 
 enum BeaconType {
+    Ble1MBeacon,
     AltBeacon,
     IBeacon
 }
@@ -83,16 +84,7 @@ public class BleAdvertisingManager {
 
         if (bluetoothAdvertiser != null) {
             AdvertiseSettings settings = getAdvertiseSettings();
-            AdvertiseData data;
-            switch (beaconType) {
-                case IBeacon:
-                    data = getIBeaconAdvertiseData();
-                    break;
-                case AltBeacon:
-                default:
-                    data = getAltBeaconAdvertiseData(uniqueCode);
-                    break;
-            }
+            AdvertiseData data = getAdvertiseData(beaconType, uniqueCode);
             AdvertiseCallback advertisingCallback = getAdvertiseCallback();
 
             bluetoothAdvertiser.startAdvertising(settings, data, advertisingCallback);
@@ -145,6 +137,31 @@ public class BleAdvertisingManager {
                 .setTxPowerLevel(AdvertiseSettings.ADVERTISE_TX_POWER_MEDIUM)
                 .setConnectable(false)
                 .setTimeout(0)
+                .build();
+    }
+
+    @NonNull
+    private AdvertiseData getAdvertiseData(BeaconType beaconType, int uniqueCode) {
+        AdvertiseData data;
+        switch (beaconType) {
+            case AltBeacon:
+                data = getAltBeaconAdvertiseData(uniqueCode);
+                break;
+            case IBeacon:
+                data = getIBeaconAdvertiseData();
+                break;
+            case Ble1MBeacon:
+            default:
+                data = getBle1MPhyAdvertiseData();
+        }
+        return data;
+    }
+
+    @NonNull
+    private AdvertiseData getBle1MPhyAdvertiseData() {
+        return new AdvertiseData.Builder()
+                .setIncludeDeviceName(true)
+                .setIncludeTxPowerLevel(true)
                 .build();
     }
 

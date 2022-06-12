@@ -23,10 +23,17 @@
         android:layout_height="wrap_content">
 
         <RadioButton
+            android:id="@+id/ble1mRadioButton"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:onClick="onRadioButtonClicked"
+            android:text="@string/ble_1m_phy"
+            android:textSize="20sp" />
+
+        <RadioButton
             android:id="@+id/altBeaconRadioButton"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:checked="true"
             android:onClick="onRadioButtonClicked"
             android:text="@string/alt_beacon_google"
             android:textSize="20sp" />
@@ -85,6 +92,6 @@
         android:layout_height="match_parent"
         android:layout_marginTop="50dp"
         android:gravity="center|bottom"
-        android:text="From Application" />
+        android:text="@string/from_application" />
 
 </LinearLayout>

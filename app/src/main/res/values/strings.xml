@@ -15,11 +15,14 @@
     <string name="waiting_for_bluetooth_enable">Attempting to enable the bluetooth adapter</string>
     <string name="beacon_type">BeaconType</string>
     <string name="beacon_type_label">Beacon Type:</string>
+    <string name="ble_1m_phy">BLE 1M PHY</string>
     <string name="alt_beacon_google">AltBeacon (Google)</string>
     <string name="i_beacon_apple">iBeacon (Apple)</string>
+    <string name="ble_advertising_ble_1m_phy_text">Advertising as BLE 1M PHY</string>
     <string name="ble_advertising_alt_beacon_text_format"><b>Advertising as AltBeacon \n</b><b>Unique Code = %x</b></string>
     <string name="ble_advertising_i_beacon_text">Advertising as iBeacon</string>
     <string name="required_permissions_not_granted">This app does not have the required permissions for BLE advertising</string>
     <string name="unique_code_string">uniqueCode</string>
     <string name="checked_beacon_type_id">beaconType</string>
+    <string name="from_application">From Application</string>
 </resources>

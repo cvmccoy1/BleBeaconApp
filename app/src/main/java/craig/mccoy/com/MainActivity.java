@@ -6,6 +6,7 @@ import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
 
 import android.Manifest;
+import android.annotation.SuppressLint;
 import android.bluetooth.BluetoothAdapter;
 import android.content.Intent;
 import android.content.SharedPreferences;
@@ -66,7 +67,7 @@ public class MainActivity extends AppCompatActivity {
         String uniqueCodeString = sharedPreferences.getString(getString(R.string.unique_code_string), "");
         editTextInput.setText(uniqueCodeString);
 
-        int checkedBeaconTypeId = sharedPreferences.getInt(getString(R.string.checked_beacon_type_id), R.id.altBeaconRadioButton);
+        int checkedBeaconTypeId = sharedPreferences.getInt(getString(R.string.checked_beacon_type_id), R.id.ble1mRadioButton);
         beaconTypeRadioGroup.clearCheck();
         beaconTypeRadioGroup.check(checkedBeaconTypeId);
 
@@ -237,18 +238,40 @@ public class MainActivity extends AppCompatActivity {
 
         // Stop any previously started BLE Advertising Service
         stopAdvertisingService();
-        findViewById(R.id.stop_advertising_button).setEnabled(true);
 
-        // Send the beaconType and uniqueCode to the service
-        String beaconType = (beaconTypeRadioGroup.getCheckedRadioButtonId() == R.id.altBeaconRadioButton ? BeaconType.AltBeacon : BeaconType.IBeacon).name();
-        String input = editTextInput.getText().toString();
-        int uniqueCode = input.isEmpty() ? 0 : Integer.parseUnsignedInt(input, 16);
-        serviceIntent.putExtra(getString(R.string.beacon_type), beaconType);
-        serviceIntent.putExtra(getString(R.string.unique_code), uniqueCode);
+        // Send the beaconType (and uniqueCode, if used)  to the service
+        setIntentExtra();
+
         // Start the service as a Foreground Service so the system won't kill it after 15 minutes
         ContextCompat.startForegroundService(this, serviceIntent);
+
+        // Enable the 'Stop Advertising' button
+        findViewById(R.id.stop_advertising_button).setEnabled(true);
+
+        // Inform the user BLE advertising has (re)started
         Toast.makeText(this, getString(R.string.advertising_started), Toast.LENGTH_LONG).show();
+
         MyLog.i(TAG, "startAdvertisingService(): Exit");
+    }
+
+    @SuppressLint("NonConstantResourceId")
+    private void setIntentExtra() {
+        int beaconTypeID = beaconTypeRadioGroup.getCheckedRadioButtonId();
+        switch (beaconTypeID) {
+            case R.id.altBeaconRadioButton:
+                serviceIntent.putExtra(getString(R.string.beacon_type), BeaconType.AltBeacon.name());
+                String input = editTextInput.getText().toString();
+                int uniqueCode = input.isEmpty() ? 0 : Integer.parseUnsignedInt(input, 16);
+                serviceIntent.putExtra(getString(R.string.unique_code), uniqueCode);
+                break;
+            case R.id.iBeaconRadioButton:
+                serviceIntent.putExtra(getString(R.string.beacon_type), BeaconType.IBeacon.name());
+                break;
+            case R.id.ble1mRadioButton:
+            default:
+                serviceIntent.putExtra(getString(R.string.beacon_type), BeaconType.Ble1MBeacon.name());
+                break;
+        }
     }
 
     private void stopAdvertisingService() {
